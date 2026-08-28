@@ -5,8 +5,8 @@ compatibility_flags = ["nodejs_compat"]
 
 [[kv_namespaces]]
 binding = "STORAGE"
-id = ""
-preview_id = ""
+id = "59141780c4b04fad9073c210eae6bdd7"
+preview_id = "59141780c4b04fad9073c210eae6bdd7"
 
 [[d1_databases]]
 binding = "DB"
@@ -15,8 +15,8 @@ database_id = ""
 preview_database_id = ""
 
 [vars]
-BOT_USERNAME = "YourBotUsername"
-AI_API_ENDPOINT = "https://your-server.com/api.php"
+BOT_USERNAME = "games_robot"
+AI_API_ENDPOINT = "https://jqz.cc.cd/api.php"
 GAME_TIMEOUT_MINUTES = "5"
 INACTIVITY_TIMEOUT_MINUTES = "10"
 MAX_PLAYERS_PER_GAME = "50"
