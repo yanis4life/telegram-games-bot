@@ -8,62 +8,30 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: npm install --legacy-peer-deps
+      - run: npx esbuild src/index.ts --bundle --platform=neutral --format=esm --target=es2022 --outfile=worker.mjs
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: Build & Deploy
+      - name: Deploy to Cloudflare
         run: |
-          ACCOUNT="ae693ae9f4faf8d8202a61970309f150"
-          SCRIPT="telegram-games-bot"
-          TOKEN="${{ secrets.CF_API_TOKEN }}"
-          KV_ID="59141780c4b04fad9073c210eae6bdd7"
-          BOT_TOKEN="${{ secrets.BOT_TOKEN }}"
-          AI_API="${{ secrets.AI_API_ENDPOINT }}"
+          curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/ae693ae9f4faf8d8202a61970309f150/workers/scripts/telegram-games-bot" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -F "metadata={\"main_module\":\"worker.mjs\",\"bindings\":[{\"name\":\"STORAGE\",\"type\":\"kv_namespace\",\"namespace_id\":\"59141780c4b04fad9073c210eae6bdd7\"},{\"name\":\"BOT_TOKEN\",\"type\":\"secret_text\",\"text\":\"${{ secrets.BOT_TOKEN }}\"},{\"name\":\"AI_API_ENDPOINT\",\"type\":\"secret_text\",\"text\":\"${{ secrets.AI_API_ENDPOINT }}\"}]};type=application/json" \
+            -F "worker.mjs=@worker.mjs;type=application/javascript+module"
 
-          # Build worker
-          npx esbuild src/index.ts --bundle --platform=neutral --format=esm --target=es2022 --outfile=worker.mjs
-
-          # Deploy with KV binding + secrets
-          METADATA="{\"main_module\":\"worker.mjs\",\"bindings\":[{\"name\":\"STORAGE\",\"type\":\"kv_namespace\",\"namespace_id\":\"$KV_ID\"},{\"name\":\"BOT_TOKEN\",\"type\":\"secret_text\",\"text\":\"$BOT_TOKEN\"},{\"name\":\"AI_API_ENDPOINT\",\"type\":\"secret_text\",\"text\":\"$AI_API\"}]}"
-
-          curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/workers/scripts/$SCRIPT" \
-            -H "Authorization: Bearer $TOKEN" \
-            -F "metadata=$METADATA;type=application/json" \
-            -F "worker.mjs=@worker.mjs;type=application/javascript+module" \
-            -o /tmp/deploy.json
-
-          python3 -c "
-import json
-with open('/tmp/deploy.json') as f:
-    d = json.load(f)
-    if d.get('success'):
-        print('Worker deployed with KV + secrets!')
-    else:
-        print('ERROR:', d.get('errors'))
-        exit(1)
-"
-
-      - name: Setup webhook
+      - name: Setup Telegram Webhook
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/setWebhook" \
             -H "Content-Type: application/json" \
-            --data "{\"url\":\"https://jqz.cc.cd/${{ secrets.BOT_TOKEN }}\",\"max_connections\":40,\"allowed_updates\":[\"message\",\"callback_query\"]}"
+            -d "{\"url\":\"https://jqz.cc.cd/${{ secrets.BOT_TOKEN }}\",\"max_connections\":40,\"allowed_updates\":[\"message\",\"callback_query\"]}"
 
-      - name: Setup route
+      - name: Setup Worker Route
         run: |
           curl -s -X POST "https://api.cloudflare.com/client/v4/zones/f9fc37ed8ab79a8797141aaf9e1fe28b/workers/routes" \
             -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --data "{\"pattern\":\"jqz.cc.cd/*\",\"script\":\"telegram-games-bot\"}"
-
-      - name: Done
-        run: echo "Bot deployed!"
+            -d "{\"pattern\":\"jqz.cc.cd/*\",\"script\":\"telegram-games-bot\"}"
