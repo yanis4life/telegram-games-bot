@@ -18,7 +18,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
@@ -38,35 +38,48 @@ jobs:
       - name: Setup Telegram Webhook
         run: |
           echo "📍 Setting up Telegram webhook..."
-          WORKER_URL="https://${{ secrets.BOT_USERNAME }}.yanis4life.workers.dev"
           DOMAIN_URL="https://jqz.cc.cd"
           WEBHOOK_URL="${DOMAIN_URL}/${{ secrets.BOT_TOKEN }}"
-          
           echo "Webhook URL: $WEBHOOK_URL"
-          
           RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/setWebhook" \
             -H "Content-Type: application/json" \
             --data "{\"url\":\"$WEBHOOK_URL\",\"max_connections\":40,\"allowed_updates\":[\"message\",\"callback_query\"]}")
-          
           echo "Webhook response: $RESPONSE"
-          
-          # Verify webhook
           sleep 2
           VERIFY=$(curl -s "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/getWebhookInfo")
           echo "Webhook info: $VERIFY"
 
-      - name: Create Cloudflare D1 Database (if not exists)
+      - name: Create Cloudflare D1 Database
         run: |
           echo "📍 Checking D1 database..."
           npx wrangler d1 list 2>/dev/null | grep games_db || \
-            npx wrangler d1 create games_db 2>/dev/null || \
-            echo "⚠️ D1 database creation skipped (create manually via Cloudflare Dashboard)"
+            (npx wrangler d1 create games_db 2>&1 | tee /tmp/d1_output.txt && \
+             echo "D1 database created successfully") || \
+            echo "⚠️ D1 creation skipped. Create manually: wrangler d1 create games_db"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+
+      - name: Setup Worker Route on Domain
+        run: |
+          echo "📍 Setting up worker route on jqz.cc.cd..."
+          ZONE_ID=$(curl -s "https://api.cloudflare.com/client/v4/zones?name=jqz.cc.cd" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -H "Content-Type: application/json" | \
+            python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['id'])" 2>/dev/null || echo "")
+          if [ -n "$ZONE_ID" ]; then
+            echo "Zone ID: $ZONE_ID"
+            ROUTE_RESULT=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/workers/routes" \
+              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{"pattern":"jqz.cc.cd/*","script":"telegram-games-bot"}')
+            echo "Route result: $ROUTE_RESULT"
+          else
+            echo "⚠️ Could not find zone for jqz.cc.cd"
+          fi
 
       - name: Deploy Status
         run: |
           echo "✅ Deployment complete!"
-          echo "🌐 Worker URL: https://${{ secrets.BOT_USERNAME }}.yanis4life.workers.dev"
+          echo "🌐 Worker URL: https://telegram-games-bot.yanis4life.workers.dev"
           echo "🌐 Domain URL: https://jqz.cc.cd"
           echo "🤖 Bot: https://t.me/${{ secrets.BOT_USERNAME }}"
