@@ -54,7 +54,9 @@ export class SudoManager {
   }
 
   async handleSudoCommand(chatId: number, userId: number, command: string, args: string[], msg: any): Promise<string> {
-    if (!this.isSudo(userId)) return t('onlySudo');
+    const sudoCommands = ["addsudo","removesudo","setpoints","setxp","resetuser","banuser","unbanuser","broadcast","broadcastusers","broadcastgroups","botstats","sudolist"];
+    if (sudoCommands.includes(command) && !this.isSudo(userId)) return t('onlySudo');
+    if (!sudoCommands.includes(command)) return '';
 
     switch (command) {
       case 'addsudo': {
