@@ -180,12 +180,19 @@ export class SudoManager {
       case 'botstats': {
         const userIds = await this.kv.listAllUsers();
         const groupIds = await this.kv.listAllGroups();
-        const stats = await this.db.getBotStats();
+        let games = '0', points = '0';
+        if (this.db) {
+          try {
+            const stats = await this.db.getBotStats();
+            games = String(stats.totalGames || 0);
+            points = String(stats.totalPoints || 0);
+          } catch {}
+        }
         return t('botStats', {
           users: userIds.length.toString(),
           groups: groupIds.length.toString(),
-          games: stats.totalGames.toString(),
-          points: stats.totalPoints.toString(),
+          games,
+          points,
         });
       }
       case 'sudolist': {
