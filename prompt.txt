@@ -1,0 +1,207 @@
+You are an expert developer specializing in building Telegram bots that run on Cloudflare Workers.
+
+Your task is to build a complete, production-ready Telegram bot for group text games with a points system, levels, leaderboards, and admin commands. The bot must be serverless and run entirely on Cloudflare Workers.
+
+**IMPORTANT:** All bot responses, menus, buttons, and game content must be in Arabic. The code itself must contain NO COMMENTS and must NOT be simplified – use advanced programming patterns, proper architecture, and comprehensive error handling.
+
+**LANGUAGE:** Do not specify a particular programming language. Choose the most appropriate language for Cloudflare Workers and implement the bot accordingly. The code must be compatible with Cloudflare Workers environment.
+
+**AI INTEGRATION:** The bot will use a custom AI API. The API endpoint is `api.php` (you will define the expected request/response format). Use this API to generate dynamic content for games that require AI. Do not use Cloudflare Workers AI or any other external AI service.
+
+---
+
+## PROJECT STRUCTURE – DIVIDE THE WORK INTO THESE PARTS:
+
+### Part 1: Core Setup & Configuration
+- Cloudflare Workers entry point and webhook handler
+- Configuration file with KV, D1 bindings
+- Environment variables and secret management
+- Database connection setup
+
+### Part 2: User Management System
+- User data structure with all necessary fields
+- Group-specific data structure
+- Player activity tracking
+- Ban system: group-level bans and bot-level bans
+- Registration and profile management
+
+### Part 3: Group Management
+- Group data structure with settings and statistics
+- Settings: enabled/disabled games per group, rounds per game, member bans
+- Group admin detection using Telegram API permissions
+- Only group admins or group owner can modify group settings
+- Delete group from bot (data retained) and delete group from leaderboard (data remains visible inside group, can be restored)
+
+### Part 4: Points & XP System
+- Points earned from winning games (amount varies by game difficulty)
+- Two types of points: Global and Group-specific
+- Both global and group points awarded simultaneously upon winning
+- XP system with 10 progressive levels
+- Each level requires progressively more XP
+
+### Part 5: Shop & Perks System
+- 10 perks available for purchase using group-specific points:
+  1. Extra Hint
+  2. Freeze Time
+  3. Skip Question
+  4. Point Doubler
+  5. Reverse Result
+  6. Remove Wrong Answer
+  7. Fast Forward
+  8. Retry
+  9. Special Badge
+  10. Detailed Stats
+- Perks are group-specific
+
+### Part 6: The 20 Games
+
+**For each game, define:**
+- Whether it's individual or group-based
+- Minimum number of players required
+- Default number of rounds
+- Points awarded for winning
+- XP awarded for winning and losing
+
+**Puzzle & General Knowledge Games:**
+1. Question & Answer – 4 options, choose the correct one
+2. Who Am I? – description of a famous person, guess the name
+3. Complete the Proverb – first half given, complete the second
+4. Word Opposite – given a word, write its opposite
+5. Synonyms – given a word, choose the correct synonym from 3 options
+
+**Word & Letter Games:**
+6. Word Race – given a letter, write a word starting with it within time limit
+7. Anagrams – scrambled letters, rearrange to form a correct word
+8. Longest Word – given a topic, write the longest possible related word
+9. Missing Word – given a sentence with a missing word, fill it in
+10. Ta Marbuta vs Ta Maftuha – identify the type of Ta in given words
+
+**Guessing & Number Games:**
+11. Guess the Number – hidden number between 1-100 with hints
+12. Coin Flip – predict heads or tails
+13. Rock Paper Scissors – play against the bot
+14. Guess the Year – given a historical event, guess the year
+15. Which is Larger? – given two numbers, choose the larger
+
+**Adventure & Interactive Story Games:**
+16. Choose Your Path – branching story with choices
+17. Escape the Room – describe a locked room, choose items to inspect/use
+18. Treasure Hunt – move north/south/east/west to find hidden treasure
+19. Solve the Riddle – complex riddle, user writes the answer
+20. Challenge Race – sequence of 5 different challenges
+
+### Part 7: Game Session Management
+- Only one active game per group at a time
+- A player can only participate in one group game at a time
+- Game flow: User types game name OR sends /games and selects from inline keyboard
+- Registration: type "سجلني"
+- Start: the person who started the game types "ابدأ"
+- Cancel: the person who started the game types "توقف" at any time
+- 5-minute wait timer – if minimum required players are registered, game starts automatically; if not, game is cancelled
+- Game state stored with automatic timeout after inactivity
+
+### Part 8: Leaderboards
+- Global leaderboard (across all groups)
+- Group leaderboard (within specific group)
+- Groups leaderboard (ranking groups by activity)
+- Shows user's current rank
+- Updates automatically after each game
+
+### Part 9: Admin & Sudo Commands
+
+**Sudo Commands (bot owner only):**
+- Add/remove admin
+- Set points, XP, or level for any user
+- Reset any user account completely
+- Ban/unban user from entire bot
+- Send broadcast message to all users
+- View bot statistics
+
+**Admin Commands (group admins via Telegram permissions):**
+- View any user's points, level, and game history within the group
+- Reset a stuck user's game session
+- End a group game immediately
+- Group settings: enable/disable specific games, set rounds per game, ban/unban member from group only
+- Delete group from bot (data retained)
+- Remove group from global leaderboard (data remains visible inside group, can be restored later)
+
+### Part 10: AI Integration (Custom API)
+- The bot will call a custom AI API endpoint: `api.php`
+- Define the request format: what data to send to `api.php` (game type, prompt, context, etc.)
+- Define the response format: structured data returned by `api.php` (question, options, correct answer, story branch, etc.)
+- Use this API to generate dynamic content for:
+  - Question & Answer – generate questions with correct answer and wrong options
+  - Complete the Proverb – generate Arabic proverbs
+  - Who Am I? – generate descriptions of famous personalities
+  - Choose Your Path – generate new story branches
+- Implement fallback static content if the API is unavailable
+
+### Part 11: Database Design
+
+**KV Storage (for fast access):**
+- User data
+- Group data
+- Game session state
+- Leaderboard cache
+
+**SQL Database (for history and analytics):**
+- Game history table: each game played with full details
+- Most played games statistics
+- Most active members per group
+- Complete audit log
+
+### Part 12: User Commands (All in Arabic)
+- `/start` – welcome and bot introduction
+- `/help` – list of games and commands
+- `/points` – show my global points
+- `/gpoints` – show my points in this group
+- `/level` – show my level and XP
+- `/shop` – show perks available for purchase
+- `/buy [perk_number]` – purchase a perk
+- `/inventory` – show perks I own
+- `/leaderboard` – show global leaderboard
+- `/gleaderboard` – show leaderboard for this group
+- `/groups_leaderboard` – show ranking of groups
+- `/games` – show list of available games with inline buttons
+- `/play [game_name]` – start a specific game
+- `/cancel` – cancel my current game session
+- `/stats` – show my detailed statistics
+
+### Part 13: Error Handling & Edge Cases
+- Handle missing or invalid commands gracefully
+- Handle timeout scenarios
+- Handle user leaving group during game
+- Handle multiple simultaneous registrations
+- Handle bot being removed from group
+- Handle API rate limits
+- Handle custom AI API failures with fallback
+
+---
+
+## TECHNICAL REQUIREMENTS
+
+- **Platform:** Cloudflare Workers
+- **Language:** Choose the most appropriate language for Cloudflare Workers
+- **Database:** KV + SQL (D1 or similar)
+- **AI:** Custom API endpoint (`api.php`) – define the integration format
+- **Telegram:** Webhooks with Inline Keyboards
+- **Code:** NO COMMENTS, NOT SIMPLIFIED, production-grade quality
+- **Language:** All user-facing content in Arabic
+
+---
+
+## DELIVERY REQUIREMENTS
+
+Deliver the complete codebase with:
+1. All files organized by the parts listed above
+2. Complete configuration file
+3. Deployment instructions
+4. All 20 games fully implemented
+5. Full admin and sudo command system
+6. Complete points, XP, and level system
+7. Full shop with all 10 perks
+8. All leaderboard types
+9. Custom AI API integration with defined request/response format
+10. Comprehensive error handling
+
+The code must be ready to deploy and run immediately on Cloudflare Workers with zero additional modifications.

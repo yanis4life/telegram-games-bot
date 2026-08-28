@@ -1,0 +1,27 @@
+name = "telegram-games-bot"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "STORAGE"
+id = ""
+preview_id = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "games_db"
+database_id = ""
+preview_database_id = ""
+
+[vars]
+BOT_USERNAME = "YourBotUsername"
+AI_API_ENDPOINT = "https://your-server.com/api.php"
+GAME_TIMEOUT_MINUTES = "5"
+INACTIVITY_TIMEOUT_MINUTES = "10"
+MAX_PLAYERS_PER_GAME = "50"
+XP_LEVELS = "[0,100,250,500,1000,2000,4000,8000,16000,32000]"
+SUDO_USERS = "[7125289523]"
+
+[env.production]
+[env.preview]
