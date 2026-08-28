@@ -24,6 +24,34 @@ async function initialize(db: DbStore | null): Promise<void> {
   }
 }
 
+async function handleGroupUpdates(kv: KvStore, msg: any, groupManager: GroupManager): Promise<void> {
+  if (msg.left_chat_member) {
+    const leftUserId = msg.left_chat_member.id;
+    const groupId = msg.chat.id;
+    const session = await kv.getSession(groupId);
+    if (session) {
+      const sm = new SessionManager(kv, {} as any);
+      await sm.removePlayer(groupId, leftUserId);
+    }
+  }
+  if (msg.new_chat_title) {
+    await groupManager.updateGroupTitle(msg.chat.id, msg.new_chat_title);
+  }
+  if (msg.group_chat_created || msg.supergroup_chat_created) {
+    await groupManager.getOrCreateGroup(msg.chat);
+  }
+  if (msg.migrate_to_chat_id) {
+    const oldId = msg.chat.id;
+    const newId = msg.migrate_to_chat_id;
+    const oldGroup = await kv.getGroup(oldId);
+    if (oldGroup) {
+      oldGroup.id = newId;
+      await kv.setGroup(oldGroup);
+      await kv.deleteGroup(oldId);
+    }
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'GET') {
@@ -71,6 +99,8 @@ export default {
         sessionManager, leaderboardManager, sudoManager, adminManager, ai, telegram, env
       );
 
+      await handleGroupUpdates(kv, msg, groupManager);
+
       if (callbackQuery) {
         const cbData = callbackQuery.data || '';
         const cbId = callbackQuery.id || '';
@@ -83,8 +113,6 @@ export default {
         }
         return new Response('OK', { status: 200 });
       }
-
-      await handleGroupUpdates(kv, msg, groupManager);
 
       if (text.startsWith('/')) {
         const parts = text.slice(1).split(' ');
@@ -108,32 +136,3 @@ export default {
     }
   },
 };
-
-async function handleGroupUpdates(kv: KvStore, msg: any, groupManager: GroupManager): Promise<void> {
-  if (msg.left_chat_member) {
-    const leftUserId = msg.left_chat_member.id;
-    const groupId = msg.chat.id;
-    const session = await kv.getSession(groupId);
-    if (session) {
-      const { SessionManager } = await import('./session/manager');
-      const sm = new SessionManager(kv, {} as any);
-      await sm.removePlayer(groupId, leftUserId);
-    }
-  }
-  if (msg.new_chat_title) {
-    await groupManager.updateGroupTitle(msg.chat.id, msg.new_chat_title);
-  }
-  if (msg.group_chat_created || msg.supergroup_chat_created) {
-    await groupManager.getOrCreateGroup(msg.chat);
-  }
-  if (msg.migrate_to_chat_id) {
-    const oldId = msg.chat.id;
-    const newId = msg.migrate_to_chat_id;
-    const oldGroup = await kv.getGroup(oldId);
-    if (oldGroup) {
-      oldGroup.id = newId;
-      await kv.setGroup(oldGroup);
-      await kv.deleteGroup(oldId);
-    }
-  }
-}
