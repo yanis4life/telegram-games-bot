@@ -12,5 +12,18 @@
     "typescript": "^5.7.0",
     "wrangler": "^4.0.0"
   },
-  "dependencies": {}
+  "description": "- Node.js 18+ - حساب Cloudflare مع Workers و D1 و KV - بوت تيليغرام (من @BotFather) - (اختياري) خادم AI API - `api.php` (لا يحتاج مفتاح API)",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yanis4life/telegram-games-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yanis4life/telegram-games-bot/issues"
+  },
+  "homepage": "https://github.com/yanis4life/telegram-games-bot#readme"
 }

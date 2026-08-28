@@ -3,3 +3,6 @@ dist/
 .wrangler/
 *.log
 .env
+cf.txt
+cf.txt.bak
+*.bak
