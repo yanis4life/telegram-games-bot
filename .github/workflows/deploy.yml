@@ -24,6 +24,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: "ae693ae9f4faf8d8202a61970309f150"
           secrets: |
             BOT_TOKEN
             AI_API_ENDPOINT
@@ -42,16 +43,10 @@ jobs:
 
       - name: Setup Worker Route on Domain
         run: |
-          ZONE_ID=$(curl -s "https://api.cloudflare.com/client/v4/zones?name=jqz.cc.cd" \
+          curl -s -X POST "https://api.cloudflare.com/client/v4/zones/f9fc37ed8ab79a8797141aaf9e1fe28b/workers/routes" \
             -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-            -H "Content-Type: application/json" | \
-            python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['id'])" 2>/dev/null)
-          if [ -n "$ZONE_ID" ]; then
-            curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/workers/routes" \
-              -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              --data '{"pattern":"jqz.cc.cd/*","script":"telegram-games-bot"}'
-          fi
+            -H "Content-Type: application/json" \
+            --data '{"pattern":"jqz.cc.cd/*","script":"telegram-games-bot"}'
 
       - name: ✅ Deploy Complete
         run: |
