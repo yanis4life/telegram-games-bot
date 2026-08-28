@@ -20,7 +20,7 @@ jobs:
         run: |
           curl -s -X PUT "https://api.cloudflare.com/client/v4/accounts/ae693ae9f4faf8d8202a61970309f150/workers/scripts/telegram-games-bot" \
             -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
-            -F "metadata={\"main_module\":\"worker.mjs\",\"bindings\":[{\"name\":\"STORAGE\",\"type\":\"kv_namespace\",\"namespace_id\":\"59141780c4b04fad9073c210eae6bdd7\"},{\"name\":\"BOT_TOKEN\",\"type\":\"secret_text\",\"text\":\"${{ secrets.BOT_TOKEN }}\"},{\"name\":\"AI_API_ENDPOINT\",\"type\":\"secret_text\",\"text\":\"${{ secrets.AI_API_ENDPOINT }}\"}]};type=application/json" \
+            -F "metadata={\"main_module\":\"worker.mjs\",\"bindings\":[{\"name\":\"STORAGE\",\"type\":\"kv_namespace\",\"namespace_id\":\"59141780c4b04fad9073c210eae6bdd7\"},{\"name\":\"BOT_TOKEN\",\"type\":\"secret_text\",\"text\":\"${{ secrets.BOT_TOKEN }}\"},{\"name\":\"AI_API_ENDPOINT\",\"type\":\"secret_text\",\"text\":\"${{ secrets.AI_API_ENDPOINT }}\"},{\"name\":\"SUDO_USERS\",\"type\":\"plain_text\",\"text\":\"[7125289523]\"}]};type=application/json" \
             -F "worker.mjs=@worker.mjs;type=application/javascript+module"
 
       - name: Setup Telegram Webhook
