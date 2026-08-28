@@ -14,10 +14,14 @@ import { CommandHandler } from './commands/handler';
 
 let initialized = false;
 
-async function initialize(db: DbStore): Promise<void> {
-  if (initialized) return;
-  await db.initialize();
-  initialized = true;
+async function initialize(db: DbStore | null): Promise<void> {
+  if (initialized || !db) return;
+  try {
+    await db.initialize();
+    initialized = true;
+  } catch {
+    console.error('D1 database initialization failed, continuing without DB');
+  }
 }
 
 export default {
@@ -38,7 +42,7 @@ export default {
 
       const telegram = new TelegramApi(botToken);
       const kv = new KvStore(env.STORAGE);
-      const db = new DbStore(env.DB);
+      const db = env.DB ? new DbStore(env.DB) : null;
 
       await initialize(db);
 
